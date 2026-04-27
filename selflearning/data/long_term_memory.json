@@ -1,0 +1,104 @@
+{
+  "demo_user": {
+    "profile_updates": [
+      {
+        "content": {
+          "analysis": "new_profile_data",
+          "updates": {
+            "additional_info": {
+              "recently_viewed_products": [
+                "Gaming Hardware"
+              ]
+            },
+            "new_interests": [
+              "AI",
+              "Machine Learning"
+            ],
+            "updated_preferences": {
+              "music_type": "Jazz"
+            }
+          },
+          "timestamp": "2026-04-27T23:44:16.450150"
+        },
+        "timestamp": "2026-04-27T23:44:16.450350"
+      },
+      {
+        "content": {
+          "analysis": "new_profile_data",
+          "updates": {
+            "additional_info": {
+              "recently_viewed_products": [
+                "Gaming Hardware"
+              ]
+            },
+            "new_interests": [
+              "AI",
+              "Machine Learning"
+            ],
+            "updated_preferences": {
+              "music_type": "Jazz"
+            }
+          },
+          "timestamp": "2026-04-27T23:46:21.185222"
+        },
+        "timestamp": "2026-04-27T23:46:21.185411"
+      },
+      {
+        "content": {
+          "analysis": "new_profile_data",
+          "updates": {
+            "additional_info": {
+              "recently_viewed_products": [
+                "Gaming Hardware"
+              ]
+            },
+            "new_interests": [
+              "AI",
+              "Machine Learning"
+            ],
+            "updated_preferences": {
+              "music_type": "Jazz"
+            }
+          },
+          "timestamp": "2026-04-27T23:48:08.379932"
+        },
+        "timestamp": "2026-04-27T23:48:08.380150"
+      },
+      {
+        "content": {
+          "analysis": "updated_profile",
+          "updates": {
+            "additional_info": {
+              "recently_viewed_items": [
+                "AI literature"
+              ]
+            },
+            "new_interests": [],
+            "updated_preferences": {
+              "music_style": "Jazz"
+            }
+          },
+          "timestamp": "2026-04-27T23:50:45.462887"
+        },
+        "timestamp": "2026-04-27T23:50:45.463255"
+      },
+      {
+        "content": {
+          "analysis": "updated_profile_analysis",
+          "updates": {
+            "interests": [
+              "AI_trends",
+              "ethical_ai"
+            ],
+            "skills": [
+              "data_analysis",
+              "machine_learning"
+            ]
+          },
+          "timestamp": "2026-04-28T00:12:25.827366"
+        },
+        "timestamp": "2026-04-28T00:12:25.827595"
+      }
+    ]
+  }
+}
