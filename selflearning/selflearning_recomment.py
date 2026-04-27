@@ -600,8 +600,8 @@ async def main():
         print(f"  上下文相关性: {rec.context_relevance:.3f}")
         print()
     
-    # 5. 再次模拟用户反馈
-    print("=== 处理第二次用户反馈 ===")
+    # 5. 再次模拟用户反馈 - 技能升级
+    print("=== 处理第二次用户反馈（技能升级）===")
     await agent.process_feedback(
         user_id="user_123",
         item_id="item_004", 
@@ -628,6 +628,137 @@ async def main():
     
     print("推荐结果:")
     for rec in recommendations_after_more_learning:
+        print(f"- 项目: {rec.item_id} - {rec.reason}")
+        print(f"  分数: {rec.score:.3f}")
+        print(f"  解释: {rec.explanation}")
+        print(f"  上下文相关性: {rec.context_relevance:.3f}")
+        print()
+    
+    # 7. 模拟用户兴趣变更 - 新增候选项目
+    print("=== 模拟用户兴趣变更 ===")
+    # 添加新的候选项目，涉及不同类别
+    new_candidate_items = [
+        {
+            "item_id": "item_001",
+            "title": "Python机器学习实战",
+            "description": "深入学习Python机器学习的实用指南",
+            "category": "technology",
+            "tags": ["python", "machine learning", "programming"],
+            "format": "book"
+        },
+        {
+            "item_id": "item_004",
+            "title": "深度学习入门",
+            "description": "从基础到应用的深度学习教程",
+            "category": "technology",
+            "tags": ["deep learning", "neural networks", "ai"],
+            "format": "course"
+        },
+        {
+            "item_id": "item_006",
+            "title": "区块链技术原理",
+            "description": "区块链技术的基础原理和应用场景",
+            "category": "blockchain",
+            "tags": ["blockchain", "cryptocurrency", "distributed systems"],
+            "format": "article"
+        },
+        {
+            "item_id": "item_007",
+            "title": "Web3.0开发实战",
+            "description": "基于区块链的Web3.0应用开发",
+            "category": "blockchain",
+            "tags": ["web3", "blockchain", "dapp"],
+            "format": "course"
+        },
+        {
+            "item_id": "item_008",
+            "title": "量子计算入门",
+            "description": "量子计算的基本概念和应用",
+            "category": "quantum",
+            "tags": ["quantum computing", "physics", "algorithms"],
+            "format": "book"
+        }
+    ]
+    
+    # 8. 第四次推荐（兴趣变更前）
+    print("=== 兴趣变更前的推荐结果 ===")
+    recommendations_before_interest_change = await agent.get_recommendations(
+        user_id="user_123",
+        context=context, 
+        candidate_items=new_candidate_items,
+        n_recommendations=3
+    )
+    
+    print("推荐结果:")
+    for rec in recommendations_before_interest_change:
+        print(f"- 项目: {rec.item_id} - {rec.reason}")
+        print(f"  分数: {rec.score:.3f}")
+        print(f"  解释: {rec.explanation}")
+        print(f"  上下文相关性: {rec.context_relevance:.3f}")
+        print()
+    
+    # 9. 模拟用户兴趣变更反馈
+    print("=== 处理兴趣变更反馈 ===")
+    await agent.process_feedback(
+        user_id="user_123",
+        item_id="item_006", 
+        feedback={
+            "rating": 5,
+            "liked": True,
+            "category": "blockchain",
+            "title": "区块链技术原理",
+            "description": "区块链技术的基础原理和应用场景",
+            "tags": ["blockchain", "cryptocurrency", "distributed systems"]
+        }
+    )
+    print("用户反馈处理完成")
+    print()
+    
+    # 10. 第五次推荐（兴趣变更后）
+    print("=== 兴趣变更后的推荐结果 ===")
+    recommendations_after_interest_change = await agent.get_recommendations(
+        user_id="user_123",
+        context=context, 
+        candidate_items=new_candidate_items,
+        n_recommendations=3
+    )
+    
+    print("推荐结果:")
+    for rec in recommendations_after_interest_change:
+        print(f"- 项目: {rec.item_id} - {rec.reason}")
+        print(f"  分数: {rec.score:.3f}")
+        print(f"  解释: {rec.explanation}")
+        print(f"  上下文相关性: {rec.context_relevance:.3f}")
+        print()
+    
+    # 11. 模拟用户对新兴趣的进一步反馈
+    print("=== 处理新兴趣的进一步反馈 ===")
+    await agent.process_feedback(
+        user_id="user_123",
+        item_id="item_007", 
+        feedback={
+            "rating": 5,
+            "liked": True,
+            "category": "blockchain",
+            "title": "Web3.0开发实战",
+            "description": "基于区块链的Web3.0应用开发",
+            "tags": ["web3", "blockchain", "dapp"]
+        }
+    )
+    print("用户反馈处理完成")
+    print()
+    
+    # 12. 第六次推荐（新兴趣巩固后）
+    print("=== 新兴趣巩固后的推荐结果 ===")
+    recommendations_after_interest_consolidation = await agent.get_recommendations(
+        user_id="user_123",
+        context=context, 
+        candidate_items=new_candidate_items,
+        n_recommendations=3
+    )
+    
+    print("推荐结果:")
+    for rec in recommendations_after_interest_consolidation:
         print(f"- 项目: {rec.item_id} - {rec.reason}")
         print(f"  分数: {rec.score:.3f}")
         print(f"  解释: {rec.explanation}")
