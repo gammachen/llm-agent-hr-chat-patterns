@@ -11,7 +11,7 @@ import asyncio
 import logging
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
@@ -280,10 +280,32 @@ class LLMReasoner:
             response = self.llm.invoke(prompt)
             response_text = response.content
             
+            logger.info(f"LLM响应: {response_text}")
+            
             # 解析JSON响应
             import json
             result = json.loads(response_text)
             return result
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON解析失败: {e}")
+            logger.error(f"原始响应: {response_text}")
+            # 尝试提取JSON部分
+            try:
+                # 查找JSON的开始和结束位置
+                start_idx = response_text.find('{')
+                end_idx = response_text.rfind('}') + 1
+                if start_idx != -1 and end_idx != -1:
+                    json_str = response_text[start_idx:end_idx]
+                    result = json.loads(json_str)
+                    return result
+            except Exception as e2:
+                logger.error(f"提取JSON失败: {e2}")
+            # 回退到默认响应
+            return {
+                "reason": "基于您的历史偏好",
+                "explanation": "该项目与您过去喜欢的项目类似",
+                "confidence": 0.7
+            }
         except Exception as e:
             logger.error(f"LLM推理失败: {e}")
             return {
@@ -472,10 +494,63 @@ async def main():
             "category": "technology",
             "tags": ["ai", "future", "innovation"],
             "format": "article"
+        },
+        {
+            "item_id": "item_004",
+            "title": "深度学习入门",
+            "description": "从基础到应用的深度学习教程",
+            "category": "technology",
+            "tags": ["deep learning", "neural networks", "ai"],
+            "format": "course"
+        },
+        {
+            "item_id": "item_005",
+            "title": "数据分析实战",
+            "description": "使用Python进行数据分析的实战指南",
+            "category": "data science",
+            "tags": ["data analysis", "python", "pandas"],
+            "format": "book"
         }
     ]
     
-    # 获取推荐
+    # 1. 初始化用户偏好 - 添加历史交互数据
+    print("=== 初始化用户偏好 ===")
+    # 添加一些历史交互数据
+    historical_interactions = [
+        {
+            "item_id": "hist_001",
+            "title": "Python编程基础",
+            "description": "Python语言入门教程",
+            "category": "technology",
+            "rating": 5,
+            "timestamp": (datetime.now() - timedelta(days=10)).isoformat()
+        },
+        {
+            "item_id": "hist_002",
+            "title": "机器学习入门",
+            "description": "机器学习基础概念和算法",
+            "category": "technology",
+            "rating": 4,
+            "timestamp": (datetime.now() - timedelta(days=7)).isoformat()
+        },
+        {
+            "item_id": "hist_003",
+            "title": "数据分析工具",
+            "description": "数据科学常用工具介绍",
+            "category": "data science",
+            "rating": 4,
+            "timestamp": (datetime.now() - timedelta(days=3)).isoformat()
+        }
+    ]
+    
+    # 为用户添加历史交互
+    for interaction in historical_interactions:
+        agent.update_user_preference("user_123", interaction)
+    print("用户偏好初始化完成，添加了3条历史交互记录")
+    print()
+    
+    # 2. 首次推荐
+    print("=== 首次推荐结果 ===")
     recommendations = await agent.get_recommendations(
         user_id="user_123",
         context=context, 
@@ -485,14 +560,14 @@ async def main():
     
     print("推荐结果:")
     for rec in recommendations:
-        print(f"- 项目: {rec.item_id}")
+        print(f"- 项目: {rec.item_id} - {rec.reason}")
         print(f"  分数: {rec.score:.3f}")
-        print(f"  原因: {rec.reason}")
         print(f"  解释: {rec.explanation}")
         print(f"  上下文相关性: {rec.context_relevance:.3f}")
         print()
     
-    # 模拟用户反馈
+    # 3. 模拟用户反馈
+    print("=== 处理用户反馈 ===")
     await agent.process_feedback(
         user_id="user_123",
         item_id="item_001", 
@@ -501,9 +576,63 @@ async def main():
             "liked": True,
             "category": "technology",
             "title": "Python机器学习实战",
-            "description": "深入学习Python机器学习的实用指南"
+            "description": "深入学习Python机器学习的实用指南",
+            "tags": ["python", "machine learning", "programming"]
         }
     )
+    print("用户反馈处理完成")
+    print()
+    
+    # 4. 第二次推荐（学习后）
+    print("=== 学习后的推荐结果 ===")
+    recommendations_after_learning = await agent.get_recommendations(
+        user_id="user_123",
+        context=context, 
+        candidate_items=candidate_items,
+        n_recommendations=3
+    )
+    
+    print("推荐结果:")
+    for rec in recommendations_after_learning:
+        print(f"- 项目: {rec.item_id} - {rec.reason}")
+        print(f"  分数: {rec.score:.3f}")
+        print(f"  解释: {rec.explanation}")
+        print(f"  上下文相关性: {rec.context_relevance:.3f}")
+        print()
+    
+    # 5. 再次模拟用户反馈
+    print("=== 处理第二次用户反馈 ===")
+    await agent.process_feedback(
+        user_id="user_123",
+        item_id="item_004", 
+        feedback={
+            "rating": 5,
+            "liked": True,
+            "category": "technology",
+            "title": "深度学习入门",
+            "description": "从基础到应用的深度学习教程",
+            "tags": ["deep learning", "neural networks", "ai"]
+        }
+    )
+    print("用户反馈处理完成")
+    print()
+    
+    # 6. 第三次推荐（进一步学习后）
+    print("=== 进一步学习后的推荐结果 ===")
+    recommendations_after_more_learning = await agent.get_recommendations(
+        user_id="user_123",
+        context=context, 
+        candidate_items=candidate_items,
+        n_recommendations=3
+    )
+    
+    print("推荐结果:")
+    for rec in recommendations_after_more_learning:
+        print(f"- 项目: {rec.item_id} - {rec.reason}")
+        print(f"  分数: {rec.score:.3f}")
+        print(f"  解释: {rec.explanation}")
+        print(f"  上下文相关性: {rec.context_relevance:.3f}")
+        print()
 
 if __name__ == "__main__":
     asyncio.run(main())
