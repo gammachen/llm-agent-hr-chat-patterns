@@ -369,7 +369,7 @@ class AdaptiveAgentSystem:
             role="观察者Agent",
             goal="准确记录用户的每一个交互事件，不遗漏任何细节",
             backstory="我是用户的专属观察者，负责细心观察和记录用户的所有行为",
-            verbose=False,
+            verbose=True,
             tools=[ObserverTool()]
         )
 
@@ -377,7 +377,7 @@ class AdaptiveAgentSystem:
             role="用户画像Agent",
             goal="维护准确、最新的用户画像信息",
             backstory="我是用户档案管理员，负责维护用户的完整画像和历史记录",
-            verbose=False,
+            verbose=True,
             tools=[UserProfileTool(), MemoryRecallTool()]
         )
 
@@ -427,7 +427,7 @@ class AdaptiveAgentSystem:
         crew = Crew(
             agents=[self.observer_agent],
             tasks=[observe_task],
-            verbose=False
+            verbose=True
         )
         crew.kickoff()
 
@@ -440,7 +440,7 @@ class AdaptiveAgentSystem:
         crew = Crew(
             agents=[self.user_profile_agent],
             tasks=[profile_task],
-            verbose=False
+            verbose=True
         )
         profile_result = crew.kickoff()
 
@@ -453,7 +453,7 @@ class AdaptiveAgentSystem:
         crew = Crew(
             agents=[self.reflective_analyst_agent],
             tasks=[analyze_task],
-            verbose=False
+            verbose=True
         )
         analysis_result = crew.kickoff()
 
@@ -466,7 +466,7 @@ class AdaptiveAgentSystem:
         crew = Crew(
             agents=[self.evolution_agent],
             tasks=[evolution_task],
-            verbose=False
+            verbose=True
         )
         evolution_result = crew.kickoff()
 
@@ -639,21 +639,162 @@ class UserBehaviorSimulator:
             self.agent.storage.store_user_profile(initial_profile)
 
         interactions = [
+            # ========== 阶段1：Python 基础 ==========
             {
                 "type": "conversation",
-                "content": "我对机器学习很感兴趣，最近在自学Python",
+                "content": "想开始学AI，听说要先学Python，不知道从哪入手",
+                "metadata": {"topics": ["Python", "入门", "学习规划"], "sentiment": "迷茫"}
+            },
+            {
+                "type": "browse",
+                "content": "搜索了「Python基础教程 推荐」",
+                "metadata": {"topics": ["Python", "教程"], "duration": "10分钟"}
+            },
+            {
+                "type": "feedback",
+                "content": "廖雪峰的Python教程很适合新手，例子很多",
+                "metadata": {"rating": 5, "category": "教程评价"}
+            },
+            {
+                "type": "conversation",
+                "content": "刚学完循环和函数，自己写了一个猜数字小游戏，很有成就感",
+                "metadata": {"topics": ["Python", "实践", "学习成果"], "sentiment": "积极"}
+            },
+            {
+                "type": "browse",
+                "content": "在GitHub上看了几个Python小游戏项目",
+                "metadata": {"topics": ["Python", "开源项目"], "duration": "20分钟"}
+            },
+            # 生活场景：健身
+            {
+                "type": "conversation",
+                "content": "晚上去健身房练了背，做了引体向上和划船",
+                "metadata": {"topics": ["健身", "力量训练"], "sentiment": "中性"}
+            },
+
+            # ========== 阶段2：Python 进阶 + 数据分析 ==========
+            {
+                "type": "conversation",
+                "content": "开始学装饰器、生成器，有点难但理解了闭包概念",
+                "metadata": {"topics": ["Python进阶", "闭包"], "sentiment": "挑战"}
+            },
+            {
+                "type": "browse",
+                "content": "阅读了《Fluent Python》部分章节",
+                "metadata": {"topics": ["Python进阶", "书籍"], "duration": "45分钟"}
+            },
+            {
+                "type": "feedback",
+                "content": "想找一些用pandas做数据清洗的实战案例",
+                "metadata": {"rating": 4, "suggestion": "更多数据实战"}
+            },
+            {
+                "type": "conversation",
+                "content": "用pandas处理了一份电商销售数据，做了透视表和可视化",
+                "metadata": {"topics": ["pandas", "数据分析", "可视化"], "sentiment": "兴奋"}
+            },
+            # 生活场景：购物
+            {
+                "type": "browse",
+                "content": "在京东买了《利用Python进行数据分析》",
+                "metadata": {"topics": ["购物", "书籍"], "duration": "5分钟"}
+            },
+
+            # ========== 阶段3：机器学习基础 ==========
+            {
+                "type": "conversation",
+                "content": "我对机器学习很感兴趣，最近在自学Python和sklearn",
                 "metadata": {"topics": ["技术", "学习", "机器学习"], "sentiment": "积极"}
             },
+            {
+                "type": "browse",
+                "content": "观看了吴恩达《Machine Learning》第一周视频",
+                "metadata": {"topics": ["机器学习", "课程"], "duration": "60分钟"}
+            },
+            {
+                "type": "feedback",
+                "content": "线性回归的梯度推导终于搞懂了，作业也做完了",
+                "metadata": {"rating": 5, "category": "学习反馈"}
+            },
+            {
+                "type": "conversation",
+                "content": "用KNN做了一个鸢尾花分类，准确率96%，太有意思了",
+                "metadata": {"topics": ["KNN", "分类", "实践"], "sentiment": "自豪"}
+            },
+            {
+                "type": "browse",
+                "content": "研究决策树和随机森林的区别",
+                "metadata": {"topics": ["决策树", "随机森林"], "duration": "30分钟"}
+            },
+            # 生活场景：亲子活动
+            {
+                "type": "conversation",
+                "content": "周末带孩子去了科技馆，体验了AI画画展区",
+                "metadata": {"topics": ["亲子", "科技馆", "AI绘画"], "sentiment": "愉快"}
+            },
+
+            # ========== 阶段4：深度学习 (CNN/RNN) ==========
             {
                 "type": "conversation",
                 "content": "想了解深度学习在图像识别中的应用",
                 "metadata": {"topics": ["深度学习", "图像识别", "技术"], "sentiment": "好奇"}
             },
             {
+                "type": "browse",
+                "content": "学习PyTorch官方教程，搭建了一个简单的CNN用于MNIST",
+                "metadata": {"topics": ["PyTorch", "CNN", "MNIST"], "duration": "90分钟"}
+            },
+            {
                 "type": "feedback",
-                "content": "AI助手推荐的课程很有用",
+                "content": "AI助手推荐的课程很有用，尤其是李沐的《动手学深度学习》",
                 "metadata": {"rating": 5, "category": "课程推荐"}
             },
+            {
+                "type": "conversation",
+                "content": "调了一晚上CNN的dropout和batch norm，终于把验证集准确率提到了99%",
+                "metadata": {"topics": ["CNN", "调参", "优化"], "sentiment": "激动"}
+            },
+            {
+                "type": "browse",
+                "content": "读了一篇关于ResNet的论文，跳过了数学细节，主要看架构",
+                "metadata": {"topics": ["ResNet", "论文"], "duration": "40分钟"}
+            },
+            # 生活场景：理发
+            {
+                "type": "conversation",
+                "content": "去理发店剪了个短发，清爽过夏天",
+                "metadata": {"topics": ["理发", "生活"], "sentiment": "轻松"}
+            },
+
+            # ========== 阶段5：自然语言处理 (NLP) ==========
+            {
+                "type": "conversation",
+                "content": "开始学NLP，刚看完词向量和RNN，对LSTM的遗忘门有点晕",
+                "metadata": {"topics": ["NLP", "RNN", "LSTM"], "sentiment": "困惑"}
+            },
+            {
+                "type": "browse",
+                "content": "在Kaggle上看了IMDB情感分析baseline",
+                "metadata": {"topics": ["情感分析", "Kaggle"], "duration": "35分钟"}
+            },
+            {
+                "type": "feedback",
+                "content": "用GRU替换LSTM后训练快了很多，效果差不多，学到一招",
+                "metadata": {"rating": 4, "category": "实践心得"}
+            },
+            {
+                "type": "conversation",
+                "content": "用Seq2Seq+Attention做了一个简单的英中翻译demo，虽然BLEU很低但能跑通",
+                "metadata": {"topics": ["Seq2Seq", "Attention", "翻译"], "sentiment": "成就感"}
+            },
+            # 生活场景：同学聚会
+            {
+                "type": "conversation",
+                "content": "周末参加大学同学聚会，好几个同学也在做AI，交流了转行经验",
+                "metadata": {"topics": ["聚会", "社交", "职业"], "sentiment": "开心"}
+            },
+
+            # ========== 阶段6：大语言模型 (LLM) ==========
             {
                 "type": "conversation",
                 "content": "最近对强化学习产生了兴趣，有什么入门建议吗",
@@ -661,13 +802,138 @@ class UserBehaviorSimulator:
             },
             {
                 "type": "browse",
-                "content": "浏览了强化学习相关书籍",
-                "metadata": {"topics": ["强化学习", "书籍"], "duration": "30分钟"}
+                "content": "看了HuggingFace的Transformer教程，理解了BERT的预训练任务",
+                "metadata": {"topics": ["Transformer", "BERT", "HuggingFace"], "duration": "70分钟"}
             },
             {
                 "type": "feedback",
-                "content": "希望推荐更多实战项目",
+                "content": "微调了一个BERT做新闻分类，F1达到0.92，比传统模型好太多",
+                "metadata": {"rating": 5, "category": "项目成果"}
+            },
+            {
+                "type": "conversation",
+                "content": "尝试用GPT-2生成故事，发现prompt设计很重要，学到了temperature和top_p",
+                "metadata": {"topics": ["GPT", "文本生成", "Prompt"], "sentiment": "有趣"}
+            },
+            {
+                "type": "browse",
+                "content": "阅读了《Attention Is All You Need》原文，理解了多头注意力的细节",
+                "metadata": {"topics": ["论文", "Transformer"], "duration": "50分钟"}
+            },
+            # 生活场景：旅行
+            {
+                "type": "conversation",
+                "content": "端午去了大理，在洱海边骑行，放松了一周",
+                "metadata": {"topics": ["旅行", "骑行", "放松"], "sentiment": "愉悦"}
+            },
+
+            # ========== 阶段7：检索增强生成 (RAG) ==========
+            {
+                "type": "conversation",
+                "content": "现在想学RAG，需要选哪个向量数据库？",
+                "metadata": {"topics": ["RAG", "向量数据库"], "sentiment": "理性"}
+            },
+            {
+                "type": "browse",
+                "content": "对比了Chroma、FAISS、Pinecone，决定先用FAISS本地试试",
+                "metadata": {"topics": ["向量数据库", "FAISS"], "duration": "40分钟"}
+            },
+            {
+                "type": "feedback",
+                "content": "搭建了一个简单RAG pipeline：PDF加载->分块->embedding->检索->LLM回答，效果不错",
+                "metadata": {"rating": 5, "category": "项目实践"}
+            },
+            {
+                "type": "conversation",
+                "content": "遇到一个问题：检索出来的片段和问题不相关，需要调chunk_size和重排序",
+                "metadata": {"topics": ["RAG", "调优", "Retrieval"], "sentiment": "困惑"}
+            },
+            {
+                "type": "browse",
+                "content": "研究了HyDE和Query Rewriting技术，决定试试Multi-Query",
+                "metadata": {"topics": ["RAG优化", "HyDE"], "duration": "35分钟"}
+            },
+            # 生活场景：开项目例会
+            {
+                "type": "conversation",
+                "content": "公司项目例会，我提议用RAG做内部知识库问答，技术负责人很感兴趣",
+                "metadata": {"topics": ["工作", "会议", "项目"], "sentiment": "积极"}
+            },
+
+            # ========== 阶段8：AI Agent ==========
+            {
+                "type": "conversation",
+                "content": "最近在学习openclaw，有什么入门建议吗",
+                "metadata": {"topics": ["openclaw", "技术", "学习建议"], "sentiment": "求知"}
+            },
+            {
+                "type": "browse",
+                "content": "浏览了openclaw相关文档，发现它是一个多agent协作框架",
+                "metadata": {"topics": ["openclaw", "Agent"], "duration": "30分钟"}
+            },
+            {
+                "type": "feedback",
+                "content": "希望推荐更多openclaw相关项目，比如基于openclaw的自动化测试项目",
                 "metadata": {"rating": 4, "suggestion": "需要更多实践"}
+            },
+            {
+                "type": "conversation",
+                "content": "刚用LangChain写了一个ReAct Agent，能调用搜索引擎和计算器",
+                "metadata": {"topics": ["LangChain", "ReAct", "Agent"], "sentiment": "兴奋"}
+            },
+            {
+                "type": "browse",
+                "content": "研究了AutoGPT和BabyAGI的设计思路，计划把记忆模块加进自己的Agent",
+                "metadata": {"topics": ["AutoGPT", "Agent记忆"], "duration": "60分钟"}
+            },
+            {
+                "type": "feedback",
+                "content": "跑通了Multi-Agent对话（用户-助手-工具），下一步加路由和规划",
+                "metadata": {"rating": 5, "category": "里程碑"}
+            },
+            # 生活场景：心理咨询
+            {
+                "type": "conversation",
+                "content": "因为连续加班压力大，约了一次线上心理咨询，聊了情绪管理",
+                "metadata": {"topics": ["心理健康", "压力"], "sentiment": "舒缓"}
+            },
+
+            # ========== 阶段9：高级/前沿（Claude Code Skill等） ==========
+            {
+                "type": "conversation",
+                "content": "最近在学习claudecode skill，有什么入门建议吗",
+                "metadata": {"topics": ["claudecode skill", "技术", "学习建议"], "sentiment": "求知"}
+            },
+            {
+                "type": "browse",
+                "content": "浏览了claudecode skill相关书籍和官方例子",
+                "metadata": {"topics": ["claudecode skill", "书籍"], "duration": "30分钟"}
+            },
+            {
+                "type": "feedback",
+                "content": "希望推荐更多claudecode无线续杯、Cursor无限续杯解决方案",
+                "metadata": {"rating": 4, "suggestion": "需要更多实践"}
+            },
+            {
+                "type": "conversation",
+                "content": "用Claude Code Skill做了一个自动生成代码注释的插件，省了不少时间",
+                "metadata": {"topics": ["Claude", "自动化", "效率"], "sentiment": "满足"}
+            },
+            {
+                "type": "browse",
+                "content": "跟踪最新Agent论文：《WebArena》、《SWE-Agent》",
+                "metadata": {"topics": ["论文", "Agent"], "duration": "45分钟"}
+            },
+            {
+                "type": "feedback",
+                "content": "把整个学习路径整理了博客，希望帮助同样转行AI的人",
+                "metadata": {"rating": 5, "category": "知识输出"}
+            },
+            # 生活场景：参加培训
+            {
+                "type": "conversation",
+                "content": "报名了一个线上AI产品经理训练营，学习如何从技术视角设计AI功能",
+                "metadata": {"topics": ["培训", "AI产品"], "sentiment": "期待"}
             },
         ]
 
@@ -697,31 +963,32 @@ class UserBehaviorSimulator:
             print(f"  - 偏好设置: {json.dumps(current_profile.preferences, ensure_ascii=False)}")
             print(f"  - 交互次数: {current_profile.interaction_count}")
 
-        print(f"\n{'='*80}")
-        print("📈 最终用户画像进化结果:")
-        print("="*80)
+            # 进化之后直接进行推荐，这样才能够凸显agent的能力
+            print(f"\n{'='*80}")
+            print("📈 最终用户画像进化结果:")
+            print("="*80)
 
-        final_profile = self.agent.storage.get_user_profile(self.user_id)
-        print(f"\n用户ID: {final_profile.user_id}")
-        print(f"用户名: {final_profile.name}")
-        print(f"生命周期阶段: {final_profile.life_stage}")
-        print(f"兴趣爱好: {', '.join(final_profile.interests)}")
-        print(f"偏好设置: {json.dumps(final_profile.preferences, ensure_ascii=False)}")
-        print(f"交互次数: {final_profile.interaction_count}")
-        print(f"最后更新: {final_profile.last_updated}")
+            final_profile = self.agent.storage.get_user_profile(self.user_id)
+            print(f"\n用户ID: {final_profile.user_id}")
+            print(f"用户名: {final_profile.name}")
+            print(f"生命周期阶段: {final_profile.life_stage}")
+            print(f"兴趣爱好: {', '.join(final_profile.interests)}")
+            print(f"偏好设置: {json.dumps(final_profile.preferences, ensure_ascii=False)}")
+            print(f"交互次数: {final_profile.interaction_count}")
+            print(f"最后更新: {final_profile.last_updated}")
 
-        print(f"\n{'='*80}")
-        print("💡 个性化推荐演示:")
-        print("="*80)
+            print(f"\n{'='*80}")
+            print("💡 个性化推荐演示:")
+            print("="*80)
 
-        query = "我想深入学习AI，应该从哪里开始？"
-        print(f"\n用户查询: {query}")
-        response = self.agent.get_personalized_response(self.user_id, query)
-        print(f"\n系统回复:\n{response}")
+            query = "推荐一些学习课程或者资料"
+            print(f"\n用户查询: {query}")
+            response = self.agent.get_personalized_response(self.user_id, query)
+            print(f"\n系统回复:\n{response}")
 
-        print(f"\n{'='*80}")
-        print("✅ 自我进化演示完成")
-        print("="*80 + "\n")
+            print(f"\n{'='*80}")
+            print("✅ 自我进化演示完成")
+            print("="*80 + "\n")
 
 async def main():
     """主函数"""
