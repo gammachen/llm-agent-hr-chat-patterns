@@ -243,24 +243,102 @@ class ObserverTool(BaseTool):
 class UserProfileTool(BaseTool):
     """用户画像工具 - 获取和更新用户信息"""
     name: str = "user_profile_tool"
-    description: str = "用于获取和更新用户画像信息"
+    description: str = (
+        "用于获取和更新用户画像信息。"
+        "动作 'get': 不需要 profile_data 参数，返回当前用户画像 JSON。"
+        "动作 'update': 必须提供 profile_data 字典，包含需要更新的字段 (如 interests, preferences, life_stage)。"
+        "注意: update 操作是合并更新，不是全量替换，会保留未提供的字段。"
+    )
 
     def _run(self, user_id: str, action: str = "get", profile_data: Dict = None) -> str:
         """获取或更新用户画像"""
+        logger.info(f"[UserProfileTool] ========== 开始执行 ==========")
+        logger.info(f"[UserProfileTool] 输入参数 - User: {user_id}, Action: {action}")
+        
         storage = MemoryStorage()
-        if action == "get":
-            profile = storage.get_user_profile(user_id)
-            if profile:
-                return json.dumps(asdict(profile), ensure_ascii=False, indent=2)
-            return f"未找到用户 {user_id} 的画像"
-        elif action == "update" and profile_data:
-            profile = UserProfile(
-                user_id=user_id,
-                last_updated=datetime.now().isoformat(),
-                **profile_data
-            )
-            storage.store_user_profile(profile)
-            return f"已更新用户 {user_id} 的画像"
+        
+        try:
+            if action == "get":
+                logger.debug(f"[UserProfileTool] 正在查询用户 {user_id} 的画像")
+                profile = storage.get_user_profile(user_id)
+                
+                if profile:
+                    result = json.dumps(asdict(profile), ensure_ascii=False, indent=2)
+                    logger.info(f"[UserProfileTool] ✅ 成功获取用户 {user_id} 画像")
+                    logger.debug(f"[UserProfileTool] 画像内容预览: {result[:200]}...")
+                    return result
+                else:
+                    logger.warning(f"[UserProfileTool] ⚠️ 未找到用户 {user_id} 的画像")
+                    return f"未找到用户 {user_id} 的画像，可能需要先初始化。"
+            
+            elif action == "update":
+                if not profile_data:
+                    logger.error(f"[UserProfileTool] ❌ 更新操作缺少 profile_data 参数")
+                    return "错误: 更新操作必须提供 profile_data 参数"
+                
+                logger.info(f"[UserProfileTool] 正在更新用户 {user_id} 画像")
+                logger.info(f"[UserProfileTool] 待更新字段: {list(profile_data.keys())}")
+                logger.debug(f"[UserProfileTool] 更新数据: {json.dumps(profile_data, ensure_ascii=False)}")
+                
+                # 先获取现有画像以进行合并，避免覆盖未提供的字段
+                existing_profile = storage.get_user_profile(user_id)
+                if not existing_profile:
+                    logger.info(f"[UserProfileTool] 用户 {user_id} 不存在，创建新画像")
+                    existing_profile = UserProfile(user_id=user_id)
+                else:
+                    logger.debug(f"[UserProfileTool] 现有画像 - 兴趣: {existing_profile.interests}, 阶段: {existing_profile.life_stage}")
+                
+                # 记录更新前的状态
+                old_interests = existing_profile.interests.copy()
+                old_preferences = existing_profile.preferences.copy()
+                old_life_stage = existing_profile.life_stage
+                
+                # 合并数据 - 智能更新策略
+                if "interests" in profile_data:
+                    current_interests = set(existing_profile.interests)
+                    new_interests = set(profile_data["interests"])
+                    merged_interests = list(current_interests | new_interests)
+                    existing_profile.interests = merged_interests
+                    logger.info(f"[UserProfileTool] 兴趣更新: {old_interests} -> {merged_interests}")
+                
+                if "preferences" in profile_data:
+                    existing_profile.preferences.update(profile_data["preferences"])
+                    logger.info(f"[UserProfileTool] 偏好更新: 新增/修改 {len(profile_data['preferences'])} 个偏好项")
+                    logger.debug(f"[UserProfileTool] 偏好详情: {profile_data['preferences']}")
+                
+                if "life_stage" in profile_data and profile_data["life_stage"]:
+                    old_stage = existing_profile.life_stage
+                    existing_profile.life_stage = profile_data["life_stage"]
+                    logger.info(f"[UserProfileTool] 生命周期阶段更新: {old_stage} -> {profile_data['life_stage']}")
+                
+                if "name" in profile_data and profile_data["name"]:
+                    existing_profile.name = profile_data["name"]
+                    logger.info(f"[UserProfileTool] 用户名更新: {profile_data['name']}")
+
+                existing_profile.last_updated = datetime.now().isoformat()
+                
+                # 保存更新后的画像
+                storage.store_user_profile(existing_profile)
+                
+                # 构建详细的返回信息
+                result_msg = (
+                    f"✅ 成功更新用户 {user_id} 画像\n"
+                    f"  - 当前兴趣: {existing_profile.interests}\n"
+                    f"  - 生命周期阶段: {existing_profile.life_stage}\n"
+                    f"  - 偏好设置数量: {len(existing_profile.preferences)}\n"
+                    f"  - 最后更新: {existing_profile.last_updated}"
+                )
+                logger.info(f"[UserProfileTool] {result_msg}")
+                logger.info(f"[UserProfileTool] ========== 更新完成 ==========")
+                return result_msg
+            
+            else:
+                logger.error(f"[UserProfileTool] ❌ 未知的动作: {action}")
+                return f"错误: 未知的动作 '{action}'，支持 'get' 或 'update'"
+
+        except Exception as e:
+            logger.error(f"[UserProfileTool] ❌ 执行出错: {str(e)}", exc_info=True)
+            return f"工具执行错误: {str(e)}"
 
 class MemoryRecallTool(BaseTool):
     """记忆召回工具 - 检索用户历史记忆"""
@@ -284,73 +362,258 @@ class MemoryRecallTool(BaseTool):
 class AnalysisTool(BaseTool):
     """分析工具 - 分析用户行为模式"""
     name: str = "analysis_tool"
-    description: str = "用于分析用户交互事件，生成行为洞察"
+    description: str = (
+        "用于分析用户未处理的交互事件，生成行为洞察。"
+        "输入: user_id。"
+        "输出: JSON 格式的事件摘要，包括事件类型统计、最近兴趣话题、情绪模式等。"
+        "注意: 调用此工具后，相关事件会被标记为已处理。"
+    )
 
     def _run(self, user_id: str) -> str:
         """分析用户行为"""
+        logger.info(f"[AnalysisTool] ========== 开始分析 ==========")
+        logger.info(f"[AnalysisTool] 分析目标用户: {user_id}")
+        
         storage = MemoryStorage()
-        events = storage.get_unprocessed_events(user_id)
+        
+        try:
+            events = storage.get_unprocessed_events(user_id)
+            logger.info(f"[AnalysisTool] 获取到 {len(events)} 个未处理事件")
+            
+            if not events:
+                logger.info(f"[AnalysisTool] ⚠️ 用户 {user_id} 没有新的交互事件需要分析")
+                return "没有新的交互事件需要分析"
 
-        if not events:
-            return "没有新的交互事件需要分析"
+            # 详细记录事件信息
+            logger.debug(f"[AnalysisTool] 事件详情:")
+            for i, event in enumerate(events[:5]):  # 只记录前5个事件的详细信息
+                logger.debug(f"  [{i+1}] 类型: {event.event_type}, 内容: {event.content[:50]}, 时间: {event.timestamp}")
+            if len(events) > 5:
+                logger.debug(f"  ... 还有 {len(events) - 5} 个事件")
 
-        event_summary = {
-            "total_events": len(events),
-            "event_types": {},
-            "recent_interests": [],
-            "behavior_patterns": []
-        }
+            event_summary = {
+                "total_events": len(events),
+                "event_types": {},
+                "recent_topics": [],
+                "sentiment_trends": [],
+                "behavior_patterns": [],
+                "raw_content_samples": []  # 添加少量原始内容供LLM参考
+            }
 
-        for event in events:
-            event_summary["event_types"][event.event_type] = \
-                event_summary["event_types"].get(event.event_type, 0) + 1
+            for event in events:
+                # 统计事件类型
+                event_summary["event_types"][event.event_type] = \
+                    event_summary["event_types"].get(event.event_type, 0) + 1
 
-            if event.event_type == "conversation" and event.metadata:
-                if "topics" in event.metadata:
-                    event_summary["recent_interests"].extend(event.metadata["topics"])
-                if "sentiment" in event.metadata:
-                    event_summary["behavior_patterns"].append(f"情绪:{event.metadata['sentiment']}")
+                # 提取元数据中的关键信息
+                if event.metadata:
+                    # 提取话题
+                    if "topics" in event.metadata:
+                        topics = event.metadata["topics"]
+                        if isinstance(topics, list):
+                            event_summary["recent_topics"].extend(topics)
+                            logger.debug(f"[AnalysisTool] 提取话题: {topics}")
+                        elif isinstance(topics, str):
+                            event_summary["recent_topics"].append(topics)
+                            logger.debug(f"[AnalysisTool] 提取话题: {topics}")
+                    
+                    # 提取情绪
+                    if "sentiment" in event.metadata:
+                        sentiment_info = {
+                            "type": event.event_type,
+                            "sentiment": event.metadata["sentiment"],
+                            "content_preview": event.content[:30]
+                        }
+                        event_summary["sentiment_trends"].append(sentiment_info)
+                        logger.debug(f"[AnalysisTool] 情绪记录: {event.metadata['sentiment']}")
+                    
+                    # 提取其他行为模式
+                    if "duration" in event.metadata:
+                        event_summary["behavior_patterns"].append(
+                            f"浏览时长: {event.metadata['duration']}"
+                        )
+                    if "rating" in event.metadata:
+                        event_summary["behavior_patterns"].append(
+                            f"评分: {event.metadata['rating']}"
+                        )
 
-        storage.mark_events_processed([e.event_id for e in events])
+                # 仅保留前3个事件的简短内容作为上下文参考，避免Token溢出
+                if len(event_summary["raw_content_samples"]) < 3:
+                    event_summary["raw_content_samples"].append({
+                        "type": event.event_type,
+                        "content_preview": event.content[:80],
+                        "timestamp": event.timestamp
+                    })
 
-        return json.dumps(event_summary, ensure_ascii=False, indent=2)
+            # 去重话题
+            event_summary["recent_topics"] = list(set(event_summary["recent_topics"]))
+            
+            logger.info(f"[AnalysisTool] 分析结果汇总:")
+            logger.info(f"  - 事件总数: {event_summary['total_events']}")
+            logger.info(f"  - 事件类型分布: {event_summary['event_types']}")
+            logger.info(f"  - 发现话题数: {len(event_summary['recent_topics'])}")
+            logger.info(f"  - 情绪记录数: {len(event_summary['sentiment_trends'])}")
+            logger.info(f"  - 行为模式数: {len(event_summary['behavior_patterns'])}")
+
+            # 标记这些事件为已处理
+            event_ids = [e.event_id for e in events]
+            storage.mark_events_processed(event_ids)
+            logger.info(f"[AnalysisTool] ✅ 已标记 {len(event_ids)} 个事件为已处理")
+
+            result_json = json.dumps(event_summary, ensure_ascii=False, indent=2)
+            logger.info(f"[AnalysisTool] 生成分析摘要，长度: {len(result_json)} 字符")
+            logger.info(f"[AnalysisTool] ========== 分析完成 ==========")
+            return result_json
+
+        except Exception as e:
+            logger.error(f"[AnalysisTool] ❌ 分析过程出错: {str(e)}", exc_info=True)
+            return f"分析工具执行错误: {str(e)}"
 
 class EvolutionTool(BaseTool):
     """进化工具 - 更新用户画像和记忆"""
     name: str = "evolution_tool"
-    description: str = "用于根据分析结果更新用户画像和长期记忆"
+    description: str = (
+        "用于根据分析结果更新用户画像和长期记忆。"
+        "输入参数:"
+        "- user_id: 用户ID"
+        "- analysis_result: 分析结果的文本描述"
+        "- recommended_updates: 字典格式，包含 interests(列表), preferences(字典), life_stage(字符串)"
+        "注意: preferences 必须是字典格式，不能是字符串。"
+    )
 
     def _run(self, user_id: str, analysis_result: str, recommended_updates: Dict) -> str:
         """执行用户画像更新"""
+        logger.info(f"[EvolutionTool] ========== 开始进化更新 ==========")
+        logger.info(f"[EvolutionTool] 目标用户: {user_id}")
+        logger.info(f"[EvolutionTool] 推荐更新参数类型检查:")
+        logger.info(f"  - recommended_updates 类型: {type(recommended_updates)}")
+        
+        # 参数验证和类型转换
+        if isinstance(recommended_updates, str):
+            logger.warning(f"[EvolutionTool] ⚠️ recommended_updates 是字符串，尝试解析为JSON")
+            try:
+                recommended_updates = json.loads(recommended_updates)
+                logger.info(f"[EvolutionTool] ✅ 成功解析字符串为字典")
+            except json.JSONDecodeError as e:
+                logger.error(f"[EvolutionTool] ❌ 无法解析 recommended_updates: {e}")
+                return f"错误: recommended_updates 格式无效，必须是字典或JSON字符串。错误: {str(e)}"
+        
+        if not isinstance(recommended_updates, dict):
+            logger.error(f"[EvolutionTool] ❌ recommended_updates 不是字典类型: {type(recommended_updates)}")
+            return f"错误: recommended_updates 必须是字典类型，当前类型: {type(recommended_updates)}"
+        
+        logger.info(f"[EvolutionTool] 推荐更新字段: {list(recommended_updates.keys())}")
+        logger.debug(f"[EvolutionTool] 推荐更新内容: {json.dumps(recommended_updates, ensure_ascii=False, indent=2)}")
+        
         storage = MemoryStorage()
 
-        profile = storage.get_user_profile(user_id)
-        if not profile:
-            profile = UserProfile(user_id=user_id)
+        try:
+            # 获取现有用户画像
+            profile = storage.get_user_profile(user_id)
+            if not profile:
+                logger.info(f"[EvolutionTool] 用户 {user_id} 不存在，创建新画像")
+                profile = UserProfile(user_id=user_id)
+            else:
+                logger.info(f"[EvolutionTool] 找到现有用户画像")
+                logger.debug(f"[EvolutionTool] 当前兴趣: {profile.interests}")
+                logger.debug(f"[EvolutionTool] 当前偏好: {profile.preferences}")
+                logger.debug(f"[EvolutionTool] 当前阶段: {profile.life_stage}")
 
-        if "interests" in recommended_updates:
-            current_interests = set(profile.interests)
-            new_interests = set(recommended_updates["interests"])
-            profile.interests = list(current_interests | new_interests)
+            # 更新兴趣列表
+            if "interests" in recommended_updates:
+                new_interests = recommended_updates["interests"]
+                
+                # 确保 interests 是列表
+                if isinstance(new_interests, str):
+                    logger.warning(f"[EvolutionTool] ⚠️ interests 是字符串，尝试解析")
+                    try:
+                        new_interests = json.loads(new_interests)
+                    except:
+                        new_interests = [new_interests]
+                
+                if isinstance(new_interests, list):
+                    current_interests = set(profile.interests)
+                    new_interests_set = set([str(i) for i in new_interests if i])  # 过滤空值并转为字符串
+                    merged_interests = list(current_interests | new_interests_set)
+                    old_count = len(profile.interests)
+                    profile.interests = merged_interests
+                    logger.info(f"[EvolutionTool] ✅ 兴趣更新: {old_count}个 -> {len(merged_interests)}个")
+                    logger.debug(f"[EvolutionTool] 新增兴趣: {new_interests_set - current_interests}")
+                else:
+                    logger.warning(f"[EvolutionTool] ⚠️ interests 格式不正确，跳过更新")
 
-        if "preferences" in recommended_updates:
-            profile.preferences.update(recommended_updates["preferences"])
+            # 更新偏好设置
+            if "preferences" in recommended_updates:
+                new_preferences = recommended_updates["preferences"]
+                
+                # 关键修复：确保 preferences 是字典
+                if isinstance(new_preferences, str):
+                    logger.warning(f"[EvolutionTool] ⚠️ preferences 是字符串，尝试解析为JSON")
+                    try:
+                        new_preferences = json.loads(new_preferences)
+                        logger.info(f"[EvolutionTool] ✅ 成功解析 preferences 字符串为字典")
+                    except json.JSONDecodeError as e:
+                        logger.error(f"[EvolutionTool] ❌ 无法解析 preferences: {e}")
+                        logger.warning(f"[EvolutionTool] 跳过 preferences 更新")
+                        new_preferences = {}
+                
+                if isinstance(new_preferences, dict):
+                    old_pref_count = len(profile.preferences)
+                    profile.preferences.update(new_preferences)
+                    new_pref_count = len(profile.preferences)
+                    logger.info(f"[EvolutionTool] ✅ 偏好更新: {old_pref_count}个 -> {new_pref_count}个")
+                    logger.debug(f"[EvolutionTool] 新增/修改的偏好: {new_preferences}")
+                else:
+                    logger.error(f"[EvolutionTool] ❌ preferences 不是字典类型: {type(new_preferences)}")
+                    logger.warning(f"[EvolutionTool] 跳过 preferences 更新")
 
-        if "life_stage" in recommended_updates:
-            profile.life_stage = recommended_updates["life_stage"]
+            # 更新生命周期阶段
+            if "life_stage" in recommended_updates:
+                new_life_stage = recommended_updates["life_stage"]
+                if new_life_stage and isinstance(new_life_stage, str) and new_life_stage.strip():
+                    old_stage = profile.life_stage
+                    profile.life_stage = new_life_stage.strip()
+                    logger.info(f"[EvolutionTool] ✅ 生命周期阶段更新: '{old_stage}' -> '{profile.life_stage}'")
+                else:
+                    logger.debug(f"[EvolutionTool] life_stage 为空或无效，跳过更新")
 
-        profile.interaction_count += 1
-        profile.last_updated = datetime.now().isoformat()
+            # 更新交互计数和时间戳
+            profile.interaction_count += 1
+            profile.last_updated = datetime.now().isoformat()
+            logger.info(f"[EvolutionTool] 交互次数: {profile.interaction_count}")
 
-        storage.store_user_profile(profile)
+            # 保存更新后的画像
+            storage.store_user_profile(profile)
+            logger.info(f"[EvolutionTool] ✅ 用户画像已保存到数据库")
 
-        storage.update_long_term_memory(user_id, "profile_updates", {
-            "analysis": analysis_result,
-            "updates": recommended_updates,
-            "timestamp": datetime.now().isoformat()
-        })
+            # 更新长期记忆
+            memory_update = {
+                "analysis_summary": analysis_result[:500] if analysis_result else "",  # 限制长度
+                "updates_applied": {
+                    "interests": profile.interests,
+                    "preferences_keys": list(profile.preferences.keys()),
+                    "life_stage": profile.life_stage
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+            storage.update_long_term_memory(user_id, "profile_updates", memory_update)
+            logger.info(f"[EvolutionTool] ✅ 长期记忆已更新")
 
-        return f"用户 {user_id} 画像已更新: 交互次数={profile.interaction_count}"
+            result_msg = (
+                f"✅ 用户 {user_id} 画像已成功更新\n"
+                f"  - 交互次数: {profile.interaction_count}\n"
+                f"  - 兴趣数量: {len(profile.interests)}\n"
+                f"  - 偏好设置数量: {len(profile.preferences)}\n"
+                f"  - 生命周期阶段: {profile.life_stage}\n"
+                f"  - 最后更新: {profile.last_updated}"
+            )
+            logger.info(f"[EvolutionTool] {result_msg}")
+            logger.info(f"[EvolutionTool] ========== 进化更新完成 ==========")
+            return result_msg
+
+        except Exception as e:
+            logger.error(f"[EvolutionTool] ❌ 进化更新过程出错: {str(e)}", exc_info=True)
+            return f"进化工具执行错误: {str(e)}"
 
 class AdaptiveAgentSystem:
     """自适应智能体系统主类"""
@@ -358,8 +621,8 @@ class AdaptiveAgentSystem:
     def __init__(self):
         self.storage = MemoryStorage()
         self.llm = LLM(
-            # model="ollama/qwen3.5:9b",
-            model="ollama/qwen3:1.7b",
+            model="ollama/qwen3.5:9b",
+            # model="ollama/qwen3:1.7b",
             base_url="http://localhost:11434"
         )
         self._setup_agents()
@@ -386,7 +649,7 @@ class AdaptiveAgentSystem:
             role="反思分析师Agent",
             goal="深入分析用户行为，生成有价值的洞察和建议",
             backstory="我是专业的分析师，通过分析用户行为模式来提供个性化建议",
-            verbose=False,
+            verbose=True,
             tools=[AnalysisTool(), UserProfileTool()]
         )
 
@@ -394,7 +657,7 @@ class AdaptiveAgentSystem:
             role="进化Agent",
             goal="根据分析结果更新用户画像，实现智能体的自我进化",
             backstory="我是进化专家，负责根据用户反馈更新系统，实现自我完善",
-            verbose=False,
+            verbose=True,
             tools=[EvolutionTool(), MemoryRecallTool()]
         )
 
@@ -402,7 +665,7 @@ class AdaptiveAgentSystem:
             role="管家Agent",
             goal="响应用户指令，提供个性化服务",
             backstory="我是您的专属管家，了解您的喜好，为您提供贴心服务",
-            verbose=False,
+            verbose=True,
             llm=self.llm
         )
 
@@ -410,7 +673,7 @@ class AdaptiveAgentSystem:
             role="个性化Agent",
             goal="生成符合用户画像的个性化响应",
             backstory="我是个性化专家，根据用户特点生成专属内容",
-            verbose=False,
+            verbose=True,
             llm=self.llm
         )
 
@@ -532,7 +795,7 @@ class AdaptiveAgentSystem:
             crew = Crew(
                 agents=[self.personalizer_agent],
                 tasks=[personalizer_task],
-                verbose=False
+                verbose=True
             )
             result = crew.kickoff()
 
@@ -1029,10 +1292,16 @@ class UserBehaviorSimulator:
                     metadata=interaction["metadata"]
                 )
 
+                ## 每次都进化好了
+                '''
                 if i % 2 == 0:
                     print(f"\n🔄 执行第 {i//2} 次自我进化闭环...")
                     self.agent.run_evolution_cycle(self.user_id)
-
+                '''
+                
+                print(f"\n🔄 执行第 {i} 次自我进化闭环...")
+                self.agent.run_evolution_cycle(self.user_id)
+                
                 current_profile = self.agent.storage.get_user_profile(self.user_id)
                 if current_profile:
                     print(f"\n📊 当前用户画像:")
@@ -1041,6 +1310,11 @@ class UserBehaviorSimulator:
                     print(f"  - 兴趣爱好: {', '.join(current_profile.interests)}")
                     print(f"  - 偏好设置: {json.dumps(current_profile.preferences, ensure_ascii=False)}")
                     print(f"  - 交互次数: {current_profile.interaction_count}")
+                    
+                    query = "分析一下用户现在的状况，给一些生活或者学习的指导建议"
+                    print(f"\n用户查询: {query}")
+                    response = self.agent.get_personalized_response(self.user_id, query)
+                    print(f"\n系统回复:\n{response}")
                 else:
                     print("\n⚠️  用户画像获取失败")
             except Exception as e:
