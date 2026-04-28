@@ -1,0 +1,102 @@
+[
+    {
+        "type": "purchase",
+        "content": "买了一台机械键盘（Keychron K3），想提升编程敲代码的效率",
+        "metadata": {"price": 399, "category": "数码外设", "sentiment": "期待"}
+    },
+    {
+        "type": "purchase",
+        "content": "入手了无线鼠标（罗技MX Master 3S），配合笔记本远程办公用",
+        "metadata": {"price": 549, "category": "数码外设", "sentiment": "满意"}
+    },
+    {
+        "type": "purchase",
+        "content": "晚上加完班饿了，下单了零食大礼包（薯片、坚果、鸭脖）",
+        "metadata": {"price": 89, "category": "零食", "sentiment": "疲惫中带点小确幸"}
+    },
+    {
+        "type": "purchase",
+        "content": "家里老人独居不放心，买了小米智能监控摄像头，能远程查看",
+        "metadata": {"price": 229, "category": "智能家居", "sentiment": "担忧中求安心"}
+    },
+    {
+        "type": "purchase",
+        "content": "咬牙买了RTX 4090显卡，为了跑本地大模型和训练自己的Agent",
+        "metadata": {"price": 12999, "category": "电脑硬件", "sentiment": "兴奋且肉疼"}
+    },
+    {
+        "type": "purchase",
+        "content": "孩子上五年级了，买了《城南旧事》《草房子》等课外阅读套装",
+        "metadata": {"price": 78, "category": "书籍/育儿", "sentiment": "欣慰"}
+    },
+    {
+        "type": "purchase",
+        "content": "周末带娃去动物园，买了儿童票（身高1.2米以上）",
+        "metadata": {"price": 40, "category": "亲子/门票", "sentiment": "愉快"}
+    },
+    {
+        "type": "purchase",
+        "content": "买了《正面管教》育儿指南，最近孩子有点叛逆，想学方法",
+        "metadata": {"price": 46, "category": "书籍/育儿", "sentiment": "焦虑但积极"}
+    },
+    {
+        "type": "purchase",
+        "content": "通勤路上丢了旧耳机，立刻下单了索尼降噪蓝牙耳机（WF-1000XM5）",
+        "metadata": {"price": 1999, "category": "数码音频", "sentiment": "懊恼后补偿"}
+    },
+    {
+        "type": "purchase",
+        "content": "买了《大语言模型之预训练：从BERT到GPT-4》技术书，系统学习LLM原理",
+        "metadata": {"price": 118, "category": "技术书籍", "sentiment": "求知"}
+    },
+    {
+        "type": "purchase",
+        "content": "存的工作资料太多，买了三星2TB移动硬盘做备份",
+        "metadata": {"price": 589, "category": "存储设备", "sentiment": "理性"}
+    },
+    {
+        "type": "purchase",
+        "content": "陪孩子做科学作业，买了《实验大百科》（含小电路、彩虹瓶材料）",
+        "metadata": {"price": 99, "category": "儿童教育", "sentiment": "亲子温馨"}
+    },
+    {
+        "type": "purchase",
+        "content": "开始学习理财，买入了一只沪深300指数基金（每月定投）",
+        "metadata": {"price": 2000, "category": "金融/投资", "sentiment": "谨慎希望"}
+    },
+    {
+        "type": "purchase",
+        "content": "给自己买了一份2026年重疾险（保额50万，年缴）",
+        "metadata": {"price": 5800, "category": "保险/健康", "sentiment": "责任感与焦虑并存"}
+    },
+    {
+        "type": "purchase",
+        "content": "手机电池不耐用，买了 Anker 2万毫安移动电源（带快充）",
+        "metadata": {"price": 159, "category": "数码配件", "sentiment": "实用"}
+    },
+    {
+        "type": "purchase",
+        "content": "对智能家居感兴趣，买了《物联网的世界：从传感器到云平台》入门书",
+        "metadata": {"price": 65, "category": "技术书籍", "sentiment": "好奇"}
+    },
+    {
+        "type": "purchase",
+        "content": "看到显卡降价，又买了一块4090组双卡跑大模型（这次理智劝自己半个月）",
+        "metadata": {"price": 11999, "category": "电脑硬件", "sentiment": "狂热与后悔交织"}
+    },
+    {
+        "type": "purchase",
+        "content": "老婆生日，买了戴森吹风机作为礼物（她一直想要）",
+        "metadata": {"price": 3290, "category": "礼物/生活", "sentiment": "幸福"}
+    },
+    {
+        "type": "purchase",
+        "content": "最近失眠，买了褪黑素软糖和蒸汽眼罩助眠",
+        "metadata": {"price": 98, "category": "健康/助眠", "sentiment": "疲惫求改善"}
+    },
+    {
+        "type": "purchase",
+        "content": "年底奖励自己，预购了《黑神话：悟空》实体豪华版",
+        "metadata": {"price": 820, "category": "游戏/娱乐", "sentiment": "期待放松"}
+    }
+]

@@ -1,0 +1,82 @@
+[    {
+        "type": "conversation",
+        "content": "周六参加了大学室友的婚礼，现场布置很温馨，见到很多老同学，聊得很开心",
+        "metadata": {"topics": ["婚礼", "社交", "怀旧"], "sentiment": "愉快"}
+    },
+    {
+        "type": "conversation",
+        "content": "周日晚上领导突然发消息，说周一早会要一个紧急方案，整个晚上都在加班，原计划的电影没看成",
+        "metadata": {"topics": ["工作", "加班", "计划被打乱"], "sentiment": "郁闷"}
+    },
+    {
+        "type": "conversation",
+        "content": "项目复盘会上，同事把出错的部分推给我，明明是他没交接清楚，当时气得手发抖",
+        "metadata": {"topics": ["工作冲突", "委屈", "人际"], "sentiment": "糟糕"}
+    },
+    {
+        "type": "conversation",
+        "content": "晚上去健身房跑了5公里，又做了几组深蹲，出了一身汗，感觉心里没那么堵了",
+        "metadata": {"topics": ["健身", "情绪释放", "运动"], "sentiment": "缓解"}
+    },
+    {
+        "type": "conversation",
+        "content": "收到好友从云南寄来的茶叶和手写信，她说最近梦到我，瞬间眼眶热了",
+        "metadata": {"topics": ["友情", "礼物", "感动"], "sentiment": "温暖"}
+    },
+    {
+        "type": "conversation",
+        "content": "体检报告出来，甲状腺有个小结节，医生建议复查，心里有点慌",
+        "metadata": {"topics": ["健康", "看病", "焦虑"], "sentiment": "担忧"}
+    },
+    {
+        "type": "conversation",
+        "content": "读书会上一位大姐分享她抗癌三年的心路历程，说“每一天都是赚来的”，听完我哭了，也觉得自己那些烦恼很小",
+        "metadata": {"topics": ["读书会", "生命感悟", "共情"], "sentiment": "感同身受"}
+    },
+    {
+        "type": "conversation",
+        "content": "天气很好，带女儿去植物园野餐，她追泡泡跑了一下午，笑得像个小太阳",
+        "metadata": {"topics": ["亲子", "户外", "野餐"], "sentiment": "幸福"}
+    },
+    {
+        "type": "conversation",
+        "content": "房东发微信说下个月要涨20%房租，还说“不租就搬走”，语气很差，感觉很无力",
+        "metadata": {"topics": ["租房", "经济压力", "冲突"], "sentiment": "愤怒"}
+    },
+    {
+        "type": "conversation",
+        "content": "和对象商量了一下，决定换个便宜点的房子，周末开始看房，虽然折腾但希望能有个新开始",
+        "metadata": {"topics": ["搬家", "伴侣沟通", "生活变动"], "sentiment": "焦虑混合期待"}
+    },
+    {
+        "type": "conversation",
+        "content": "吃饭碰到以前的同事，他跳槽后薪资翻倍，公司还给期权，聊完我坐在工位上发了很久的呆",
+        "metadata": {"topics": ["职场比较", "失落", "自我怀疑"], "sentiment": "酸涩"}
+    },
+    {
+        "type": "conversation",
+        "content": "妈妈打电话说爸爸搬花盆时扭了腰，一直瞒着我，听她声音很疲惫，我怪自己没常回去看看",
+        "metadata": {"topics": ["家庭", "父母健康", "愧疚"], "sentiment": "自责"}
+    },
+
+    {
+        "type": "conversation",
+        "content": "HR请了一位心理咨询师讲“职场情绪急救”，学到了“暂停-呼吸-拆解”三步法，试了一下真的有用",
+        "metadata": {"topics": ["心理讲座", "情绪管理", "成长"], "sentiment": "有启发"}
+    },
+    {
+        "type": "conversation",
+        "content": "约了认识十年的老友吃火锅，我说了房子、工作、体检的事，她没有给建议，就听着，最后说“辛苦了”，我哭了一场，轻松多了",
+        "metadata": {"topics": ["友谊", "倾诉", "支持"], "sentiment": "释然"}
+    },    
+    {
+        "type": "conversation",
+        "content": "晚上自己写了篇日记，发现这个月虽然起伏很大，但每次低点后都出现了转机，也许生活就是这样吧",
+        "metadata": {"topics": ["反思", "成长", "接纳"], "sentiment": "平和"}
+    },
+    {
+        "type": "conversation",
+        "content": "去医院复查，医生说结节很小，定期观察就行，不需要手术，走出医院时觉得天特别蓝",
+        "metadata": {"topics": ["健康", "好消息", "庆幸"], "sentiment": "轻松"}
+    }
+]

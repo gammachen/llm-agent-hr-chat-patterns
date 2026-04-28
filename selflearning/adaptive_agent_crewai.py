@@ -358,7 +358,8 @@ class AdaptiveAgentSystem:
     def __init__(self):
         self.storage = MemoryStorage()
         self.llm = LLM(
-            model="ollama/qwen3.5:9b",
+            # model="ollama/qwen3.5:9b",
+            model="ollama/qwen3:1.7b",
             base_url="http://localhost:11434"
         )
         self._setup_agents()
@@ -936,6 +937,10 @@ class UserBehaviorSimulator:
                 "metadata": {"topics": ["培训", "AI产品"], "sentiment": "期待"}
             },
         ]
+        
+        ## 从文件中读取交互数据
+        interactions = json.load(open("data/life_data.json"))
+        interactions = json.load(open("data/purchase_data.json"))
 
         for i, interaction in enumerate(interactions, 1):
             print(f"\n{'='*80}")
@@ -981,7 +986,7 @@ class UserBehaviorSimulator:
             print("💡 个性化推荐演示:")
             print("="*80)
 
-            query = "推荐一些学习课程或者资料"
+            query = "推荐一些学习课程或者资料，给出一下实施建议或者一些实施方案应对策略"
             print(f"\n用户查询: {query}")
             response = self.agent.get_personalized_response(self.user_id, query)
             print(f"\n系统回复:\n{response}")
