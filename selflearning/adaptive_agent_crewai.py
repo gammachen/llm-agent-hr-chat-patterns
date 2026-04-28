@@ -419,57 +419,72 @@ class AdaptiveAgentSystem:
         """处理用户交互的主流程"""
         logger.info(f"处理用户 {user_id} 的 {interaction_type} 交互")
 
-        observe_task = Task(
-            description=f"记录用户 {user_id} 的 {interaction_type} 交互: {content}",
-            agent=self.observer_agent,
-            expected_output="事件记录确认"
-        )
+        try:
+            observe_task = Task(
+                description=f"记录用户 {user_id} 的 {interaction_type} 交互: {content}",
+                agent=self.observer_agent,
+                expected_output="事件记录确认"
+            )
 
-        crew = Crew(
-            agents=[self.observer_agent],
-            tasks=[observe_task],
-            verbose=True
-        )
-        crew.kickoff()
+            crew = Crew(
+                agents=[self.observer_agent],
+                tasks=[observe_task],
+                verbose=False
+            )
+            crew.kickoff()
+        except Exception as e:
+            logger.error(f"观察者Agent执行失败: {e}")
 
-        profile_task = Task(
-            description=f"获取用户 {user_id} 的画像",
-            agent=self.user_profile_agent,
-            expected_output="用户画像JSON"
-        )
+        try:
+            profile_task = Task(
+                description=f"获取用户 {user_id} 的画像",
+                agent=self.user_profile_agent,
+                expected_output="用户画像JSON"
+            )
 
-        crew = Crew(
-            agents=[self.user_profile_agent],
-            tasks=[profile_task],
-            verbose=True
-        )
-        profile_result = crew.kickoff()
+            crew = Crew(
+                agents=[self.user_profile_agent],
+                tasks=[profile_task],
+                verbose=False
+            )
+            profile_result = crew.kickoff()
+        except Exception as e:
+            logger.error(f"用户画像Agent执行失败: {e}")
+            profile_result = "{}"
 
-        analyze_task = Task(
-            description=f"分析用户 {user_id} 的最新交互",
-            agent=self.reflective_analyst_agent,
-            expected_output="行为分析报告"
-        )
+        try:
+            analyze_task = Task(
+                description=f"分析用户 {user_id} 的最新交互",
+                agent=self.reflective_analyst_agent,
+                expected_output="行为分析报告"
+            )
 
-        crew = Crew(
-            agents=[self.reflective_analyst_agent],
-            tasks=[analyze_task],
-            verbose=True
-        )
-        analysis_result = crew.kickoff()
+            crew = Crew(
+                agents=[self.reflective_analyst_agent],
+                tasks=[analyze_task],
+                verbose=False
+            )
+            analysis_result = crew.kickoff()
+        except Exception as e:
+            logger.error(f"分析Agent执行失败: {e}")
+            analysis_result = "{}"
 
-        evolution_task = Task(
-            description=f"根据分析结果更新用户 {user_id} 的画像",
-            agent=self.evolution_agent,
-            expected_output="更新确认"
-        )
+        try:
+            evolution_task = Task(
+                description=f"根据分析结果更新用户 {user_id} 的画像",
+                agent=self.evolution_agent,
+                expected_output="更新确认"
+            )
 
-        crew = Crew(
-            agents=[self.evolution_agent],
-            tasks=[evolution_task],
-            verbose=True
-        )
-        evolution_result = crew.kickoff()
+            crew = Crew(
+                agents=[self.evolution_agent],
+                tasks=[evolution_task],
+                verbose=False
+            )
+            evolution_result = crew.kickoff()
+        except Exception as e:
+            logger.error(f"进化Agent执行失败: {e}")
+            evolution_result = "{}"
 
         return {
             "profile": profile_result,
@@ -479,55 +494,59 @@ class AdaptiveAgentSystem:
 
     def get_personalized_response(self, user_id: str, query: str) -> str:
         """获取个性化响应"""
-        profile = self.storage.get_user_profile(user_id)
+        try:
+            profile = self.storage.get_user_profile(user_id)
 
-        if not profile:
-            profile = UserProfile(user_id=user_id, name="新用户")
-            self.storage.store_user_profile(profile)
+            if not profile:
+                profile = UserProfile(user_id=user_id, name="新用户")
+                self.storage.store_user_profile(profile)
 
-        memory = self.storage.get_long_term_memory(user_id)
-        entity = self.storage.get_entity_memory(user_id)
+            memory = self.storage.get_long_term_memory(user_id)
+            entity = self.storage.get_entity_memory(user_id)
 
-        context = f"""
-        用户ID: {user_id}
-        用户名: {profile.name}
-        生命周期阶段: {profile.life_stage}
-        兴趣爱好: {', '.join(profile.interests)}
-        偏好设置: {json.dumps(profile.preferences, ensure_ascii=False)}
-        交互次数: {profile.interaction_count}
-        历史记忆: {json.dumps(memory, ensure_ascii=False)[:500]}
-        实体记忆: {json.dumps(entity, ensure_ascii=False)[:500]}
-        """
+            context = f"""
+            用户ID: {user_id}
+            用户名: {profile.name}
+            生命周期阶段: {profile.life_stage}
+            兴趣爱好: {', '.join(profile.interests)}
+            偏好设置: {json.dumps(profile.preferences, ensure_ascii=False)}
+            交互次数: {profile.interaction_count}
+            历史记忆: {json.dumps(memory, ensure_ascii=False)[:500]}
+            实体记忆: {json.dumps(entity, ensure_ascii=False)[:500]}
+            """
 
-        prompt = f"""
-        {context}
+            prompt = f"""
+            {context}
 
-        用户查询: {query}
+            用户查询: {query}
 
-        请根据用户画像和历史记忆，给出个性化的回复。
-        """
+            请根据用户画像和历史记忆，给出个性化的回复。
+            """
 
-        personalizer_task = Task(
-            description=prompt,
-            agent=self.personalizer_agent,
-            expected_output="个性化回复文本"
-        )
+            personalizer_task = Task(
+                description=prompt,
+                agent=self.personalizer_agent,
+                expected_output="个性化回复文本"
+            )
 
-        crew = Crew(
-            agents=[self.personalizer_agent],
-            tasks=[personalizer_task],
-            verbose=False
-        )
-        result = crew.kickoff()
+            crew = Crew(
+                agents=[self.personalizer_agent],
+                tasks=[personalizer_task],
+                verbose=False
+            )
+            result = crew.kickoff()
 
-        self.process_user_interaction(
-            user_id=user_id,
-            interaction_type="conversation",
-            content=query,
-            metadata={"topics": self._extract_topics(query)}
-        )
+            self.process_user_interaction(
+                user_id=user_id,
+                interaction_type="conversation",
+                content=query,
+                metadata={"topics": self._extract_topics(query)}
+            )
 
-        return result
+            return result
+        except Exception as e:
+            logger.error(f"个性化响应生成失败: {e}")
+            return f"抱歉，我暂时无法提供个性化回复。错误信息: {str(e)[:100]}"
 
     def _extract_topics(self, text: str) -> List[str]:
         """提取文本中的话题"""
@@ -538,81 +557,110 @@ class AdaptiveAgentSystem:
         """运行自我进化闭环"""
         logger.info(f"启动用户 {user_id} 的自我进化闭环")
 
-        storage = MemoryStorage()
-        events = storage.get_unprocessed_events(user_id)
-
-        if not events:
-            logger.info("没有新的交互事件")
-            return
-
-        events_text = "\n".join([
-            f"- 类型: {e.event_type}, 内容: {e.content[:100]}, 时间: {e.timestamp}"
-            for e in events[:10]
-        ])
-
-        profile = storage.get_user_profile(user_id)
-        current_profile = json.dumps(asdict(profile), ensure_ascii=False, indent=2) if profile else "无"
-
-        analysis_prompt = f"""
-        当前用户画像:
-        {current_profile}
-
-        最近交互事件:
-        {events_text}
-
-        请分析这些事件，识别用户兴趣变化、行为模式，并给出推荐更新。
-        返回JSON格式:
-        {{
-            "new_interests": ["新发现的兴趣"],
-            "updated_preferences": {{"偏好键": "偏好值"}},
-            "life_stage_change": "如果检测到阶段变化则填写，否则为空",
-            "insights": ["关键洞察1", "关键洞察2"]
-        }}
-        """
-
-        analyst_task = Task(
-            description=analysis_prompt,
-            agent=self.reflective_analyst_agent,
-            expected_output="JSON格式的分析和建议"
-        )
-
-        crew = Crew(
-            agents=[self.reflective_analyst_agent],
-            tasks=[analyst_task],
-            verbose=False
-        )
-        analysis = crew.kickoff()
-
         try:
-            if isinstance(analysis, str):
-                analysis_json = self._extract_json(analysis)
-            else:
-                analysis_json = analysis
+            storage = MemoryStorage()
+            events = storage.get_unprocessed_events(user_id)
 
-            if analysis_json and "new_interests" in analysis_json:
-                evolution_tool = EvolutionTool()
-                evolution_tool._run(
-                    user_id=user_id,
-                    analysis_result=str(analysis),
-                    recommended_updates={
-                        "interests": analysis_json.get("new_interests", []),
-                        "preferences": analysis_json.get("updated_preferences", {}),
-                        "life_stage": analysis_json.get("life_stage_change", "")
-                    }
-                )
-                logger.info(f"进化完成: {analysis_json}")
+            if not events:
+                logger.info("没有新的交互事件")
+                return
+
+            events_text = "\n".join([
+                f"- 类型: {e.event_type}, 内容: {e.content[:100]}, 时间: {e.timestamp}"
+                for e in events[:10]
+            ])
+
+            profile = storage.get_user_profile(user_id)
+            current_profile = json.dumps(asdict(profile), ensure_ascii=False, indent=2) if profile else "无"
+
+            analysis_prompt = f"""
+            当前用户画像:
+            {current_profile}
+
+            最近交互事件:
+            {events_text}
+
+            请分析这些事件，识别用户兴趣变化、行为模式，并给出推荐更新。
+            返回JSON格式:
+            {{
+                "new_interests": ["新发现的兴趣"],
+                "updated_preferences": {{"偏好键": "偏好值"}},
+                "life_stage_change": "如果检测到阶段变化则填写，否则为空",
+                "insights": ["关键洞察1", "关键洞察2"]
+            }}
+            """
+
+            analyst_task = Task(
+                description=analysis_prompt,
+                agent=self.reflective_analyst_agent,
+                expected_output="JSON格式的分析和建议"
+            )
+
+            crew = Crew(
+                agents=[self.reflective_analyst_agent],
+                tasks=[analyst_task],
+                verbose=False
+            )
+            analysis = crew.kickoff()
+
+            try:
+                if isinstance(analysis, str):
+                    analysis_json = self._extract_json(analysis)
+                else:
+                    analysis_json = analysis
+
+                if analysis_json and "new_interests" in analysis_json:
+                    evolution_tool = EvolutionTool()
+                    evolution_tool._run(
+                        user_id=user_id,
+                        analysis_result=str(analysis),
+                        recommended_updates={
+                            "interests": analysis_json.get("new_interests", []),
+                            "preferences": analysis_json.get("updated_preferences", {}),
+                            "life_stage": analysis_json.get("life_stage_change", "")
+                        }
+                    )
+                    logger.info(f"进化完成: {analysis_json}")
+            except Exception as e:
+                logger.error(f"进化处理错误: {e}")
         except Exception as e:
-            logger.error(f"进化处理错误: {e}")
+            logger.error(f"自我进化闭环执行失败: {e}")
 
     def _extract_json(self, text: str) -> Dict:
         """从文本中提取JSON"""
-        json_match = re.search(r'\{[^{}]*\}', text, re.DOTALL)
-        if json_match:
+        try:
+            if not text or not isinstance(text, str):
+                logger.warning(f"无效的输入文本: {type(text)}")
+                return {}
+            
+            text = text.strip()
+            
+            if text.startswith('```json'):
+                text = text[7:]
+            if text.startswith('```'):
+                text = text[3:]
+            if text.endswith('```'):
+                text = text[:-3]
+            
+            text = text.strip()
+            
+            json_match = re.search(r'\{.*\}', text, re.DOTALL)
+            if json_match:
+                try:
+                    return json.loads(json_match.group())
+                except json.JSONDecodeError as e:
+                    logger.error(f"JSON解析失败: {e}")
+            
             try:
-                return json.loads(json_match.group())
-            except:
-                pass
-        return {}
+                return json.loads(text)
+            except json.JSONDecodeError as e:
+                logger.error(f"直接解析JSON失败: {e}")
+            
+            logger.warning(f"无法从文本中提取有效JSON: {text[:100]}...")
+            return {}
+        except Exception as e:
+            logger.error(f"提取JSON时发生意外错误: {e}")
+            return {}
 
 class UserBehaviorSimulator:
     """用户行为模拟器 - 用于演示和测试"""
@@ -620,6 +668,14 @@ class UserBehaviorSimulator:
     def __init__(self, agent_system: AdaptiveAgentSystem):
         self.agent = agent_system
         self.user_id = "demo_user"
+    
+    def _get_default_interactions(self):
+        """获取默认的模拟交互数据"""
+        return [
+            {"type": "conversation", "content": "想开始学Python，有什么入门建议吗", "metadata": {"topics": ["Python", "学习"], "sentiment": "求知"}},
+            {"type": "browse", "content": "搜索Python基础教程", "metadata": {"topics": ["Python", "教程"], "duration": "15分钟"}},
+            {"type": "conversation", "content": "学完了Python基础，接下来该学什么", "metadata": {"topics": ["Python进阶", "学习规划"], "sentiment": "期待"}}
+        ]
 
     def simulate_user_journey(self):
         """模拟用户旅程，展示自我进化效果"""
@@ -939,48 +995,75 @@ class UserBehaviorSimulator:
         ]
         
         ## 从文件中读取交互数据
-        interactions = json.load(open("data/life_data.json"))
-        interactions = json.load(open("data/purchase_data.json"))
+        try:
+            interactions = json.load(open("data/life_data.json"))
+            logger.info(f"从 life_data.json 加载了 {len(interactions)} 条记录")
+        except Exception as e:
+            logger.error(f"加载 life_data.json 失败: {e}")
+            interactions = []
+        
+        if not interactions:
+            try:
+                interactions = json.load(open("data/purchase_data.json"))
+                logger.info(f"从 purchase_data.json 加载了 {len(interactions)} 条记录")
+            except Exception as e:
+                logger.error(f"加载 purchase_data.json 失败: {e}")
+                interactions = []
+        
+        if not interactions:
+            logger.warning("未加载到任何交互数据，使用默认模拟数据")
+            interactions = self._get_default_interactions()
 
         for i, interaction in enumerate(interactions, 1):
-            print(f"\n{'='*80}")
-            print(f"📌 第 {i} 次交互: {interaction['type']}")
-            print(f"内容: {interaction['content']}")
-            print(f"元数据: {json.dumps(interaction['metadata'], ensure_ascii=False)}")
-            print("="*80)
+            try:
+                print(f"\n{'='*80}")
+                print(f"📌 第 {i} 次交互: {interaction['type']}")
+                print(f"内容: {interaction['content']}")
+                print(f"元数据: {json.dumps(interaction['metadata'], ensure_ascii=False)}")
+                print("="*80)
 
-            self.agent.process_user_interaction(
-                user_id=self.user_id,
-                interaction_type=interaction["type"],
-                content=interaction["content"],
-                metadata=interaction["metadata"]
-            )
+                self.agent.process_user_interaction(
+                    user_id=self.user_id,
+                    interaction_type=interaction["type"],
+                    content=interaction["content"],
+                    metadata=interaction["metadata"]
+                )
 
-            if i % 2 == 0:
-                print(f"\n🔄 执行第 {i//2} 次自我进化闭环...")
-                self.agent.run_evolution_cycle(self.user_id)
+                if i % 2 == 0:
+                    print(f"\n🔄 执行第 {i//2} 次自我进化闭环...")
+                    self.agent.run_evolution_cycle(self.user_id)
 
-            current_profile = self.agent.storage.get_user_profile(self.user_id)
-            print(f"\n📊 当前用户画像:")
-            print(f"  - 用户名: {current_profile.name}")
-            print(f"  - 生命周期阶段: {current_profile.life_stage}")
-            print(f"  - 兴趣爱好: {', '.join(current_profile.interests)}")
-            print(f"  - 偏好设置: {json.dumps(current_profile.preferences, ensure_ascii=False)}")
-            print(f"  - 交互次数: {current_profile.interaction_count}")
+                current_profile = self.agent.storage.get_user_profile(self.user_id)
+                if current_profile:
+                    print(f"\n📊 当前用户画像:")
+                    print(f"  - 用户名: {current_profile.name}")
+                    print(f"  - 生命周期阶段: {current_profile.life_stage}")
+                    print(f"  - 兴趣爱好: {', '.join(current_profile.interests)}")
+                    print(f"  - 偏好设置: {json.dumps(current_profile.preferences, ensure_ascii=False)}")
+                    print(f"  - 交互次数: {current_profile.interaction_count}")
+                else:
+                    print("\n⚠️  用户画像获取失败")
+            except Exception as e:
+                logger.error(f"第 {i} 次交互处理失败: {e}")
+                print(f"❌ 第 {i} 次交互处理失败，继续下一次...")
 
-            # 进化之后直接进行推荐，这样才能够凸显agent的能力
+        # 进化之后直接进行推荐，这样才能够凸显agent的能力
+        try:
             print(f"\n{'='*80}")
             print("📈 最终用户画像进化结果:")
             print("="*80)
 
             final_profile = self.agent.storage.get_user_profile(self.user_id)
-            print(f"\n用户ID: {final_profile.user_id}")
-            print(f"用户名: {final_profile.name}")
-            print(f"生命周期阶段: {final_profile.life_stage}")
-            print(f"兴趣爱好: {', '.join(final_profile.interests)}")
-            print(f"偏好设置: {json.dumps(final_profile.preferences, ensure_ascii=False)}")
-            print(f"交互次数: {final_profile.interaction_count}")
-            print(f"最后更新: {final_profile.last_updated}")
+            if final_profile:
+                print(f"\n用户ID: {final_profile.user_id}")
+                print(f"用户名: {final_profile.name}")
+                print(f"生命周期阶段: {final_profile.life_stage}")
+                print(f"兴趣爱好: {', '.join(final_profile.interests)}")
+                print(f"偏好设置: {json.dumps(final_profile.preferences, ensure_ascii=False)}")
+                print(f"交互次数: {final_profile.interaction_count}")
+                print(f"最后更新: {final_profile.last_updated}")
+            else:
+                print("\n⚠️  无法获取最终用户画像")
 
             print(f"\n{'='*80}")
             print("💡 个性化推荐演示:")
@@ -994,18 +1077,31 @@ class UserBehaviorSimulator:
             print(f"\n{'='*80}")
             print("✅ 自我进化演示完成")
             print("="*80 + "\n")
+        except Exception as e:
+            logger.error(f"演示结束阶段出错: {e}")
+            print(f"\n❌ 演示结束阶段出错: {e}")
 
 async def main():
     """主函数"""
-    print("\n" + "="*80)
-    print("🎯 CrewAI自适应智能体系统初始化")
-    print("="*80 + "\n")
+    try:
+        print("\n" + "="*80)
+        print("🎯 CrewAI自适应智能体系统初始化")
+        print("="*80 + "\n")
 
-    agent_system = AdaptiveAgentSystem()
+        agent_system = AdaptiveAgentSystem()
 
-    simulator = UserBehaviorSimulator(agent_system)
-    simulator.simulate_user_journey()
+        simulator = UserBehaviorSimulator(agent_system)
+        simulator.simulate_user_journey()
+    except Exception as e:
+        logger.error(f"主程序执行失败: {e}", exc_info=True)
+        print(f"\n❌ 系统运行失败: {e}")
+        print("请检查Ollama服务是否正常运行，以及模型是否已正确下载")
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    try:
+        import asyncio
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\n\n👋 用户中断，程序退出")
+    except Exception as e:
+        print(f"\n❌ 程序启动失败: {e}")
