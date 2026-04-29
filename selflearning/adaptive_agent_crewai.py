@@ -818,7 +818,7 @@ class AdaptiveAgentSystem:
 
     def run_evolution_cycle(self, user_id: str):
         """运行自我进化闭环"""
-        logger.info(f"启动用户 {user_id} 的自我进化闭环")
+        logger.info(f"========== 启动用户 {user_id} 的自我进化闭环 ==========")
 
         try:
             storage = MemoryStorage()
@@ -828,6 +828,7 @@ class AdaptiveAgentSystem:
                 logger.info("没有新的交互事件")
                 return
 
+            logger.info(f"获取到 {len(events)} 个未处理事件")
             events_text = "\n".join([
                 f"- 类型: {e.event_type}, 内容: {e.content[:100]}, 时间: {e.timestamp}"
                 for e in events[:10]
@@ -844,13 +845,22 @@ class AdaptiveAgentSystem:
             {events_text}
 
             请分析这些事件，识别用户兴趣变化、行为模式，并给出推荐更新。
-            返回JSON格式:
+            
+            **重要**: 必须返回有效的 JSON 格式，不要包含额外的文本说明。
+            
+            JSON 格式要求:
             {{
-                "new_interests": ["新发现的兴趣"],
-                "updated_preferences": {{"偏好键": "偏好值"}},
-                "life_stage_change": "如果检测到阶段变化则填写，否则为空",
-                "insights": ["关键洞察1", "关键洞察2"]
+                "new_interests": ["兴趣1", "兴趣2"],
+                "updated_preferences": {{"偏好键1": "偏好值1", "偏好键2": "偏好值2"}},
+                "life_stage_change": "阶段名称或空字符串",
+                "insights": ["洞察1", "洞察2"]
             }}
+            
+            注意:
+            - new_interests 必须是字符串数组
+            - updated_preferences 必须是字典对象（键值对）
+            - life_stage_change 必须是字符串
+            - 如果没有变化，可以返回空数组或空字符串
             """
 
             analyst_task = Task(
@@ -866,28 +876,83 @@ class AdaptiveAgentSystem:
             )
             analysis = crew.kickoff()
 
+            logger.info(f"[EvolutionCycle] 分析师输出类型: {type(analysis)}")
+            logger.debug(f"[EvolutionCycle] 分析师输出内容: {str(analysis)[:500]}...")
+
             try:
+                # 提取 JSON
                 if isinstance(analysis, str):
                     analysis_json = self._extract_json(analysis)
+                    logger.info(f"[EvolutionCycle] 从字符串中提取的 JSON: {analysis_json}")
                 else:
                     analysis_json = analysis
+                    logger.info(f"[EvolutionCycle] 直接使用非字符串结果")
 
-                if analysis_json and "new_interests" in analysis_json:
+                if not analysis_json:
+                    logger.warning(f"[EvolutionCycle] ⚠️ 无法解析分析结果，跳过进化")
+                    return
+
+                # 构建推荐更新参数，确保类型正确
+                recommended_updates = {}
+                
+                # 处理 interests
+                interests = analysis_json.get("new_interests", [])
+                if isinstance(interests, list):
+                    recommended_updates["interests"] = [str(i) for i in interests if i]
+                elif isinstance(interests, str):
+                    recommended_updates["interests"] = [interests]
+                else:
+                    recommended_updates["interests"] = []
+                
+                # 处理 preferences - 关键修复
+                preferences = analysis_json.get("updated_preferences", {})
+                if isinstance(preferences, dict):
+                    # 确保所有值都是字符串或基本类型
+                    recommended_updates["preferences"] = {
+                        str(k): str(v) if not isinstance(v, (int, float, bool)) else v 
+                        for k, v in preferences.items()
+                    }
+                elif isinstance(preferences, str):
+                    # 如果是字符串，尝试解析为 JSON
+                    try:
+                        parsed_prefs = json.loads(preferences)
+                        if isinstance(parsed_prefs, dict):
+                            recommended_updates["preferences"] = {
+                                str(k): str(v) if not isinstance(v, (int, float, bool)) else v 
+                                for k, v in parsed_prefs.items()
+                            }
+                        else:
+                            recommended_updates["preferences"] = {}
+                    except:
+                        recommended_updates["preferences"] = {}
+                else:
+                    recommended_updates["preferences"] = {}
+                
+                # 处理 life_stage
+                life_stage = analysis_json.get("life_stage_change", "")
+                recommended_updates["life_stage"] = str(life_stage).strip() if life_stage else ""
+
+                logger.info(f"[EvolutionCycle] 构建的推荐更新参数:")
+                logger.info(f"  - interests: {recommended_updates['interests']}")
+                logger.info(f"  - preferences: {recommended_updates['preferences']}")
+                logger.info(f"  - life_stage: '{recommended_updates['life_stage']}'")
+
+                # 调用 EvolutionTool
+                if recommended_updates["interests"] or recommended_updates["preferences"] or recommended_updates["life_stage"]:
                     evolution_tool = EvolutionTool()
-                    evolution_tool._run(
+                    result = evolution_tool._run(
                         user_id=user_id,
                         analysis_result=str(analysis),
-                        recommended_updates={
-                            "interests": analysis_json.get("new_interests", []),
-                            "preferences": analysis_json.get("updated_preferences", {}),
-                            "life_stage": analysis_json.get("life_stage_change", "")
-                        }
+                        recommended_updates=recommended_updates
                     )
-                    logger.info(f"进化完成: {analysis_json}")
+                    logger.info(f"[EvolutionCycle] ✅ 进化完成: {result}")
+                else:
+                    logger.info(f"[EvolutionCycle] ⚠️ 没有需要更新的内容，跳过进化")
+
             except Exception as e:
-                logger.error(f"进化处理错误: {e}")
+                logger.error(f"[EvolutionCycle] ❌ 进化处理错误: {e}", exc_info=True)
         except Exception as e:
-            logger.error(f"自我进化闭环执行失败: {e}")
+            logger.error(f"[EvolutionCycle] ❌ 自我进化闭环执行失败: {e}", exc_info=True)
 
     def _extract_json(self, text: str) -> Dict:
         """从文本中提取JSON"""
